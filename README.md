@@ -1,29 +1,42 @@
+name: GetDrive
 
-# Free RDP 6 HOURS
+on: workflow_dispatch
 
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 9999
 
-
-### HOW TO CREATE
-```
-> Press the Fork button to create RDP (For Android / HP Users, Please Use Desktop Mode).
-
-> visit https://dashboard.ngrok.com to get NGROK_AUTH_TOKEN
-
-> Inside this Repo Go to Settings> Secrets> New repository secret
-
-> Fill in the Name: Enter NGROK_AUTH_TOKEN
-
-> Fill in Value: Visit https://dashboard.ngrok.com/auth/your-authtoken Copy and Paste in the value
-
-> Press Add secret 
-
-> Go to Action> CI> Run workflow
-
-> Refresh Web and go to CI> build
-
-> Press Down facing arrow button "RDP INFO LOGIN" To Get IP, User, Password.
-```
-## Video
-[![VPS_RDP_Github](https://www.youtube.com/s/desktop/f7d4cb0d/img/favicon_144x144.png)](https://youtu.be/H-cbUgKNeI8)
-### WARN
-THIS IS ONLY FOR EDUCATIONAL PURPOSES DON'T USE FOR MINING OR ILLEGAL USE
+    steps:
+    - name: Download Ngrok.
+      run: |
+        Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+        Invoke-WebRequest https://raw.githubusercontent.com/GetDrive/vps/main/start.bat -OutFile start.bat
+        Invoke-WebRequest https://raw.githubusercontent.com/LEE-ai116/AdityaRDP08/main/wallpaper.png -OutFile wallpaper.png
+        Invoke-WebRequest https://raw.githubusercontent.com/GetDrive/vps/main/wallpaper.bat -OutFile wallpaper.bat
+        Invoke-WebRequest https://raw.githubusercontent.com/GetDrive/vps/main/loop.bat -OutFile loop.bat
+    - name: Download Launcher.
+      run: |
+        Invoke-WebRequest https://raw.githubusercontent.com/GetDrive/vps/main/launcher/Node.js.lnk -OutFile Node.js.lnk
+        Invoke-WebRequest https://raw.githubusercontent.com/GetDrive/vps/main/launcher/Visual%20Studio%202019.lnk -OutFile "Visual Studio 2019.lnk"
+    - name: Extract Ngrok File.
+      run: Expand-Archive ngrok.zip
+    - name: Connect to Ngrok.
+      run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
+      env:
+        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+    - name: Enabling access to RDP.
+      run: | 
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+        copy wallpaper.png C:\Users\Public\Desktop\wallpaper.png
+        copy wallpaper.bat C:\Users\Public\Desktop\wallpaper.bat
+        copy Node.js.lnk C:\Users\Public\Desktop\Node.js.lnk
+        copy "Visual Studio 2019.lnk" "C:\Users\Public\Desktop\Visual Studio 2019.lnk"
+    - name: Open Tunnel.
+      run: Start-Process Powershell -ArgumentList '-Noexit -Command ".\ngrok\ngrok.exe tcp --region ap 3389"'
+    - name: Сonnect to your RDP CPU 2 Core - 7GB Ram - 256 SSD.
+      run: cmd /c start.bat
+    - name: Successfully made!You can close the tab now.
+      run: cmd /c loop.bat
